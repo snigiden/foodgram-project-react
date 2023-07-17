@@ -10,7 +10,7 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = TagSerializer
-
+    
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -19,4 +19,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    
+
+    def get_serializer_class(self):
+        if self.action == 'GET':
+            return RecipeSerializer
+        return RecipeSerializer
