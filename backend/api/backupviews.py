@@ -54,8 +54,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
 
     def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
-            return RecipeShowSerializer
+        #if self.action == 'GET':
+        #    return RecipeShowSerializer
         return RecipeCreateSerializer
     
     #@action(detail=False, methods=['post'],

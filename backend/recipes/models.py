@@ -17,14 +17,14 @@ class Tag(models.Model):
         max_length=200,
         unique=True,
     )
-    color_code = models.CharField(
+    color = models.CharField(
         max_length=7,
         unique=True,
     )
     slug = AutoSlugField(
         unique=True,
         populate_from='name',
-        editable=True,
+        editable=False,
     )
 
     def __str__(self):
@@ -36,7 +36,7 @@ class Ingredient(models.Model):
     name = models.TextField(
         max_length=200,
     )
-    units = models.TextField(
+    measurement_unit = models.TextField(
         max_length=200,
     )
 
@@ -57,18 +57,20 @@ class Recipe(models.Model):
     image = models.ImageField(
         upload_to='uploads/recipes',
     )
-    description = models.TextField(
+    text = models.TextField(
         max_length=400,
     )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
+        through_fields=('recipe', 'ingredient'),
+        related_name='recipes',
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
         related_name='recipes',
     )
-    cook_time = models.PositiveIntegerField
+    cooking_time = models.PositiveIntegerField()
     pub_date = models.DateTimeField(
         auto_now_add=True,
         db_index=True,
@@ -83,11 +85,22 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='recipes',
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        related_name='ingredients',
     )
-    amount = models.PositiveIntegerField(
-        max_length=200,
+    amount = models.IntegerField(
+        blank=True,
+        null=True,
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_combination',
+            )
+        ]

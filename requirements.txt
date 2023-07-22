@@ -4,3 +4,5 @@ sqlparse==0.4.4
 Pillow==9.5.0
 django-autoslug==1.9.9
 djangorestframework==3.14.0
+pytils==0.4.1
+drf-extra-fields
