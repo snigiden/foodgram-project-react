@@ -1,5 +1,6 @@
-from .models import User, Follow
 from rest_framework import serializers
+
+from .models import Follow, User
 
 
 class UserShowSerializer(serializers.ModelSerializer):
@@ -17,8 +18,12 @@ class UserShowSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        if self.context.get('request') and self.context['request'].user.is_authenticated:
-            return Follow.objects.filter(follower=self.context['request'].user, following=obj).exists()
+        if (self.context.get('request') and
+                self.context['request'].user.is_authenticated):
+            return Follow.objects.filter(
+                follower=self.context['request'].user,
+                following=obj
+            ).exists()
         return False
 
 

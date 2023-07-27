@@ -1,6 +1,6 @@
-from django.db import models
-from django.contrib.auth import get_user_model
 from autoslug import AutoSlugField
+from django.contrib.auth import get_user_model
+from django.db import models
 
 User = get_user_model()
 
@@ -49,7 +49,6 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='recipes',
     )
     name = models.CharField(
         max_length=200,
@@ -63,12 +62,9 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredient',
-        through_fields=('recipe', 'ingredient'),
-        related_name='recipes',
     )
     tags = models.ManyToManyField(
         Tag,
-        related_name='recipes',
     )
     cooking_time = models.PositiveIntegerField()
     pub_date = models.DateTimeField(
@@ -92,10 +88,7 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='ingredients',
     )
-    amount = models.IntegerField(
-        blank=True,
-        null=True,
-    )
+    amount = models.IntegerField()
 
     class Meta:
         constraints = [
