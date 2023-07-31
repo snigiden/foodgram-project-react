@@ -24,9 +24,6 @@ class User(AbstractUser):
     last_name = models.TextField(
         max_length=100,
     )
-    password = models.TextField(
-        max_length=100,
-    )
 
     def __str__(self):
         return self.username
@@ -47,6 +44,7 @@ class Follow(models.Model):
     )
 
     class Meta:
+        verbose_name = 'Подписки'
         constraints = [
             models.UniqueConstraint(
                 fields=['follower', 'following'],
