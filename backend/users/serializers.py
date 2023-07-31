@@ -19,8 +19,8 @@ class UserShowSerializer(serializers.ModelSerializer):
         )
     """Проверяем статус подписки на пользователя"""
     def get_is_subscribed(self, obj):
-        if (self.context.get('request') and
-                self.context['request'].user.is_authenticated):
+        if (self.context.get('request')
+           and self.context['request'].user.is_authenticated):
             return Follow.objects.filter(
                 follower=self.context['request'].user,
                 following=obj
