@@ -11,15 +11,15 @@ from rest_framework.response import Response
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from tanks.models import Cart, Favorite
 from users.models import Follow, User
-from users.serializers import (ChangePasswordSerializer, UserCreateSerializer,
-                               UserShowSerializer)
 
 from .filters import NameSearcher, RecipeFilter
 from .pagination import LimitPaginator
 from .permissions import IsOwnerOrReadOnly
 from .serializers import (IngredientShowSerializer, RecipeCreateSerializer,
                           RecipeShowSerializer, RecipeSmallSerializer,
-                          SubscriptionSerializer, TagSerializer)
+                          SubscriptionSerializer, TagSerializer,
+                          ChangePasswordSerializer, UserCreateSerializer,
+                          UserShowSerializer)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -42,13 +42,18 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'],
             permission_classes=(permissions.IsAuthenticated,))
     def set_password(self, request):
+        #serializer = ChangePasswordSerializer(request.user, data=request.data)
         serializer = ChangePasswordSerializer(request.user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {'detail': 'password changed'},
-                status=status.HTTP_204_NO_CONTENT
-            )
+        #if serializer.is_valid():
+        #    serializer.save()
+        #    return Response({'detail': 'password changed'})
+        #    #return Response(
+        #    #    {'detail': 'password changed'},
+        #    #    status=status.HTTP_204_NO_CONTENT
+        #    #)
+        #if serializer.is_valid():
+        serializer.is_valid()
+        return Response(serializer.validated_data)
 
     @action(detail=False, methods=['get'],
             permission_classes=(permissions.IsAuthenticated,),

@@ -1,14 +1,9 @@
 from autoslug import AutoSlugField
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.core.validators import RegexValidator, MinValueValidator
 
 User = get_user_model()
-
-# Содержит модели для рецепта:
-# Tag
-# Ingredient
-# Recipe
-# RecipeIngredient
 
 
 class Tag(models.Model):
@@ -22,6 +17,11 @@ class Tag(models.Model):
         verbose_name='HEX цвета',
         max_length=7,
         unique=True,
+        validators=[
+            RegexValidator(
+                regex=r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+            ),
+        ],
     )
     slug = AutoSlugField(
         verbose_name='Слаг',
@@ -87,7 +87,8 @@ class Recipe(models.Model):
         verbose_name='Теги'
     )
     cooking_time = models.PositiveIntegerField(
-        verbose_name='Время приготовления'
+        verbose_name='Время приготовления',
+        validators=[MinValueValidator(1)]
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
@@ -120,6 +121,7 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveIntegerField(
         verbose_name='Количество',
+        validators=[MinValueValidator(1)],
     )
 
     class Meta:

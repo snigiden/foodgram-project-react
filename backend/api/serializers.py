@@ -3,8 +3,94 @@ from rest_framework import serializers
 
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from tanks.models import Cart, Favorite
-from users.models import Follow
-from users.serializers import UserShowSerializer
+from users.models import Follow, User
+
+"""
+Блок сериализаторов для операций с пользователем.
+"""
+
+
+class UserShowSerializer(serializers.ModelSerializer):
+    """GET сериализатор информации пользователя"""
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+        )
+    """Проверяем статус подписки на пользователя"""
+    def get_is_subscribed(self, obj):
+        if (self.context.get('request')
+           and self.context['request'].user.is_authenticated):
+            return Follow.objects.filter(
+                follower=self.context['request'].user,
+                following=obj
+            ).exists()
+        return False
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    """POST сериализатор создания пользователя"""
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        )
+
+    def create(self, validated_data):
+        password = validated_data['password']
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=True)
+    current_password = serializers.CharField(required=True)
+
+    def validate(self, obj):
+        #if not obj.get('user').check_password(obj.get('current_password')):
+        #    raise serializers.ValidationError(
+        #        {'current_password': 'wrong password'}
+        #    )
+        user = self.context['user']
+        if not user.check_password(obj.get('current_password')):
+            raise serializers.ValidationError(
+                {'current_password': 'wrong password'}
+            )
+        if (obj['current_password']
+           == obj['new_password']):
+            raise serializers.ValidationError(
+                {'errors': 'passwords must be different'}
+            )
+        return obj
+    
+
+    def update(self, instance, validated_data):
+
+
+        instance.set_password(validated_data['new_password'])
+        instance.save()
+        return validated_data
+
+
+"""
+Блок сериализаторов для операций с рецептами.
+"""
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -114,15 +200,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     """POST сериализатор для создания рецепта"""
     ingredients = RecipeIngredientCreateSerializer(
         many=True,
+        required=True,
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
         many=True,
+        required=True,
     )
-    image = Base64ImageField()
-    name = serializers.CharField()
-    text = serializers.CharField()
-    cooking_time = serializers.IntegerField()
+    image = Base64ImageField(required=True)
+    name = serializers.CharField(required=True)
+    text = serializers.CharField(required=True)
+    cooking_time = serializers.IntegerField(required=True)
 
     class Meta:
         model = Recipe
@@ -136,29 +224,34 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, obj):
-        for field in ['image', 'name', 'text', 'cooking_time']:
-            if not obj.get(field):
-                raise serializers.ValidationError(f'field {field} is required')
-        if not obj.get('tags'):
-            raise serializers.ValidationError('least 1 tag is required')
-        if not obj.get('ingredients'):
-            raise serializers.ValidationError('least 1 ingredient is required')
         ingredients = [
             ingredient['id'] for ingredient in obj.get('ingredients')
         ]
         unique_ingredients = set(ingredients)
         if len(ingredients) != len(unique_ingredients):
-            raise serializers.ValidationError('ingredients must be unique')
+            raise serializers.ValidationError(
+                {'errors': 'ingredients must be unique'}
+            )
+        tags = obj.get('tags')
+        unique_tags = set(tags)
+        if len(tags) != len(unique_tags):
+            raise serializers.ValidationError(
+                {'errors': 'tags must be unique'}
+            )
+        if obj.get('cooking_time') < 1:
+            raise serializers.ValidationError(
+                {'errors': 'time for cooking must have positive value'}
+            )
         return obj
     """Создаём привязку тегов и ингредиентов к рецепту"""
     def tags_ingredients_setup(self, tags, ingredients, recipe):
         recipe.tags.set(tags)
-        for item in ingredients:
-            RecipeIngredient.objects.create(
-                recipe=recipe,
-                ingredient=Ingredient.objects.get(id=item['id']),
-                amount=item['amount']
-            )
+        RecipeIngredient.objects.bulk_create(RecipeIngredient(
+            recipe=recipe,
+            ingredient=Ingredient.objects.get(id=item['id']),
+            amount=item['amount'])
+            for item in ingredients
+        )
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
