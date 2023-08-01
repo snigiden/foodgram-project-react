@@ -59,15 +59,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    """POST сериализатор смены пароля"""
     new_password = serializers.CharField(required=True)
     current_password = serializers.CharField(required=True)
 
     def validate(self, obj):
-        #if not obj.get('user').check_password(obj.get('current_password')):
-        #    raise serializers.ValidationError(
-        #        {'current_password': 'wrong password'}
-        #    )
-        user = self.context['user']
+        user = self.context
         if not user.check_password(obj.get('current_password')):
             raise serializers.ValidationError(
                 {'current_password': 'wrong password'}
@@ -78,13 +75,10 @@ class ChangePasswordSerializer(serializers.Serializer):
                 {'errors': 'passwords must be different'}
             )
         return obj
-    
 
-    def update(self, instance, validated_data):
-
-
-        instance.set_password(validated_data['new_password'])
-        instance.save()
+    def update(self, validated_data, user):
+        user.set_password(validated_data['new_password'])
+        user.save()
         return validated_data
 
 

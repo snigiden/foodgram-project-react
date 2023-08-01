@@ -15,10 +15,10 @@ from users.models import Follow, User
 from .filters import NameSearcher, RecipeFilter
 from .pagination import LimitPaginator
 from .permissions import IsOwnerOrReadOnly
-from .serializers import (IngredientShowSerializer, RecipeCreateSerializer,
-                          RecipeShowSerializer, RecipeSmallSerializer,
-                          SubscriptionSerializer, TagSerializer,
-                          ChangePasswordSerializer, UserCreateSerializer,
+from .serializers import (ChangePasswordSerializer, IngredientShowSerializer,
+                          RecipeCreateSerializer, RecipeShowSerializer,
+                          RecipeSmallSerializer, SubscriptionSerializer,
+                          TagSerializer, UserCreateSerializer,
                           UserShowSerializer)
 
 
@@ -42,18 +42,17 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'],
             permission_classes=(permissions.IsAuthenticated,))
     def set_password(self, request):
-        #serializer = ChangePasswordSerializer(request.user, data=request.data)
-        serializer = ChangePasswordSerializer(request.user, data=request.data)
-        #if serializer.is_valid():
-        #    serializer.save()
-        #    return Response({'detail': 'password changed'})
-        #    #return Response(
-        #    #    {'detail': 'password changed'},
-        #    #    status=status.HTTP_204_NO_CONTENT
-        #    #)
-        #if serializer.is_valid():
-        serializer.is_valid()
-        return Response(serializer.validated_data)
+        serializer = ChangePasswordSerializer(
+            context=request.user,
+            data=request.data
+        )
+        if serializer.is_valid():
+            serializer.update(serializer.validated_data, user=request.user)
+            return Response(
+                {'detail': 'password has been changed'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        return Response(serializer.errors)
 
     @action(detail=False, methods=['get'],
             permission_classes=(permissions.IsAuthenticated,),
@@ -102,6 +101,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 {'detail': 'successfuly unsubscribed'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        return None
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -163,6 +163,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'detail': 'recipe deleted from shopping cart'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        return None
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(permissions.IsAuthenticated,))
@@ -195,6 +196,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'detail': 'recipe deleted from favorites'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        return None
 
     @action(detail=False, methods=('GET',),
             permission_classes=(permissions.IsAuthenticated),
