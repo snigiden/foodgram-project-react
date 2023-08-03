@@ -2,7 +2,7 @@
 from rest_framework import status
 
 
-def create_relation(model, user, subject, request):
+def create_or_delete_relation(model, user, subject, request):
     field_names = [field.name for field in model._meta.get_fields()]
     user_field = field_names[1]
     subject_field = field_names[2]
@@ -15,7 +15,9 @@ def create_relation(model, user, subject, request):
             }
             return response
         except model.DoesNotExist:
-            instance = model.objects.create(**{user_field: user, subject_field: subject})
+            instance = model.objects.create(
+                **{user_field: user, subject_field: subject}
+            )
             response = {
                  'string': {'detail': 'relation created'},
                  'status': status.HTTP_200_OK,
@@ -24,7 +26,9 @@ def create_relation(model, user, subject, request):
             return response
     if request.method == 'DELETE':
         try:
-            instance = model.objects.get(**{user_field: user, subject_field: subject})
+            instance = model.objects.get(
+                **{user_field: user, subject_field: subject}
+            )
             instance.delete()
             response = {
                  'string': {'detail': 'relation deleted'},

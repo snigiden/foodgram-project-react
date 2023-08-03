@@ -1,6 +1,9 @@
-from django.db import models
+from io import StringIO
 
-from recipes.models import Recipe
+from django.db import models
+from django.http import FileResponse
+
+from recipes.models import Recipe, RecipeIngredient
 from users.models import User
 
 
@@ -54,3 +57,21 @@ class Cart(models.Model):
                 name='unique_cart',
             )
         ]
+
+    def create_grocery_list(request):
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__cart_recipe__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(
+            amount=models.Sum('amount')
+        )
+        buffer = StringIO()
+        for item in ingredients:
+            buffer.write(f"{item['ingredient__name']}\t")
+            buffer.write(f"{item['amount']}\t")
+            buffer.write(f"{item['ingredient__measurement_unit']}\n")
+        response = FileResponse(buffer.getvalue(), content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="cart.txt"'
+        return response

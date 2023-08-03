@@ -1,14 +1,10 @@
-from io import StringIO
-
-from django.db.models import Sum
-from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from recipes.models import Ingredient, Recipe, Tag
 from tanks.models import Cart, Favorite
 from users.models import Follow, User
 
@@ -20,7 +16,8 @@ from .serializers import (ChangePasswordSerializer, IngredientShowSerializer,
                           RecipeSmallSerializer, SubscriptionSerializer,
                           TagSerializer, UserCreateSerializer,
                           UserShowSerializer)
-from .utils import create_relation
+from .utils import create_or_delete_relation
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """Оперируем модель пользователей"""
@@ -73,7 +70,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, **kwargs):
         follower = request.user
         following = get_object_or_404(User, id=kwargs['pk'])
-        response = create_relation(Follow, follower, following, request)
+        response = create_or_delete_relation(
+            Follow, follower, following, request
+        )
         response_status = response.get('status')
         if response_status == status.HTTP_200_OK:
             serializer = SubscriptionSerializer(
@@ -81,7 +80,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 context={"request": request}
             )
             return Response(serializer.data, status=response_status)
-        return Response(response.get('string'), status = response_status)
+        return Response(response.get('string'), status=response_status)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -115,7 +114,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         user = request.user
-        response = create_relation(Cart, user, recipe, request)
+        response = create_or_delete_relation(Cart, user, recipe, request)
         response_status = response.get('status')
         if response_status == status.HTTP_200_OK:
             serializer = RecipeSmallSerializer(recipe, data=request.data)
@@ -124,14 +123,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 serializer.data,
                 status=response_status
             )
-        return Response(response.get('string'), status = response_status)
+        return Response(response.get('string'), status=response_status)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(permissions.IsAuthenticated,))
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         user = request.user
-        response = create_relation(Favorite, user, recipe, request)
+        response = create_or_delete_relation(Favorite, user, recipe, request)
         response_status = response.get('status')
         if response_status == status.HTTP_200_OK:
             serializer = RecipeSmallSerializer(recipe, data=request.data)
@@ -140,26 +139,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 serializer.data,
                 status=response_status
             )
-        return Response(response.get('string'), status = response_status)
-        
+        return Response(response.get('string'), status=response_status)
 
     @action(detail=False, methods=('GET',),
-            permission_classes=(permissions.IsAuthenticated),
+            permission_classes=(permissions.IsAuthenticated,),
             url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__cart_recipe__user=request.user
-        ).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).annotate(
-            amount=Sum('amount')
-        )
-        buffer = StringIO()
-        for item in ingredients:
-            buffer.write(f"{item['ingredient__name']}\t")
-            buffer.write(f"{item['amount']}\t")
-            buffer.write(f"{item['ingredient__measurement_unit']}\n")
-        response = FileResponse(buffer.getvalue(), content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename="cart.txt"'
+        response = Cart.create_grocery_list(request)
         return response
