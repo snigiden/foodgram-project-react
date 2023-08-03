@@ -10,8 +10,8 @@ def create_or_delete_relation(model, user, subject, request):
         try:
             model.objects.get(**{user_field: user, subject_field: subject})
             response = {
-                 'string': {'detail': 'relation already exists'},
-                 'status': status.HTTP_400_BAD_REQUEST,
+                'string': {'detail': 'relation already exists'},
+                'status': status.HTTP_400_BAD_REQUEST,
             }
             return response
         except model.DoesNotExist:
@@ -19,9 +19,9 @@ def create_or_delete_relation(model, user, subject, request):
                 **{user_field: user, subject_field: subject}
             )
             response = {
-                 'string': {'detail': 'relation created'},
-                 'status': status.HTTP_200_OK,
-                 'instance': instance,
+                'string': {'detail': 'relation created'},
+                'status': status.HTTP_200_OK,
+                'instance': instance,
             }
             return response
     if request.method == 'DELETE':
@@ -31,13 +31,13 @@ def create_or_delete_relation(model, user, subject, request):
             )
             instance.delete()
             response = {
-                 'string': {'detail': 'relation deleted'},
-                 'status': status.HTTP_204_NO_CONTENT,
+                'string': {'detail': 'relation deleted'},
+                'status': status.HTTP_204_NO_CONTENT,
             }
             return response
         except model.DoesNotExist:
             response = {
-                 'string': {'errors': 'relation does not exist'},
-                 'status': status.HTTP_400_BAD_REQUEST,
+                'string': {'errors': 'relation does not exist'},
+                'status': status.HTTP_400_BAD_REQUEST,
             }
             return response
