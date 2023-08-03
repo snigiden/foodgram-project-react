@@ -1,7 +1,4 @@
-from io import StringIO
-
 from django.db import models
-from django.http import FileResponse
 
 from recipes.models import Recipe, RecipeIngredient
 from users.models import User
