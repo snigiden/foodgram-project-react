@@ -67,7 +67,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         #    raise serializers.ValidationError(
         #        {'current_password': 'wrong password'}
         #    )
-        user = self.context['user']
+        user = obj.user
         if not user.check_password(obj.get('current_password')):
             raise serializers.ValidationError(
                 {'current_password': 'wrong password'}
@@ -79,13 +79,6 @@ class ChangePasswordSerializer(serializers.Serializer):
             )
         return obj
     
-
-    def update(self, instance, validated_data):
-
-
-        instance.set_password(validated_data['new_password'])
-        instance.save()
-        return validated_data
 
 
 """

@@ -42,8 +42,8 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'],
             permission_classes=(permissions.IsAuthenticated,))
     def set_password(self, request):
-        #serializer = ChangePasswordSerializer(request.user, data=request.data)
         serializer = ChangePasswordSerializer(request.user, data=request.data)
+        #serializer = ChangePasswordSerializer(data=request.data)
         #if serializer.is_valid():
         #    serializer.save()
         #    return Response({'detail': 'password changed'})
