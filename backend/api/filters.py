@@ -24,6 +24,7 @@ class RecipeFilter(FilterSet):
     def is_favorited_filter(self, queryset, name, value):
         if value:
             return queryset.filter(favorite__user=self.request.user)
+        return queryset
 
     def is_in_shopping_cart_filter(self, queryset, name, value):
         if value:

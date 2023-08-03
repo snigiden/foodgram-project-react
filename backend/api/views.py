@@ -15,12 +15,12 @@ from users.models import Follow, User
 from .filters import NameSearcher, RecipeFilter
 from .pagination import LimitPaginator
 from .permissions import IsOwnerOrReadOnly
-from .serializers import (IngredientShowSerializer, RecipeCreateSerializer,
-                          RecipeShowSerializer, RecipeSmallSerializer,
-                          SubscriptionSerializer, TagSerializer,
-                          ChangePasswordSerializer, UserCreateSerializer,
+from .serializers import (ChangePasswordSerializer, IngredientShowSerializer,
+                          RecipeCreateSerializer, RecipeShowSerializer,
+                          RecipeSmallSerializer, SubscriptionSerializer,
+                          TagSerializer, UserCreateSerializer,
                           UserShowSerializer)
-
+from .utils import create_relation
 
 class UserViewSet(viewsets.ModelViewSet):
     """Оперируем модель пользователей"""
@@ -42,18 +42,17 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'],
             permission_classes=(permissions.IsAuthenticated,))
     def set_password(self, request):
-        serializer = ChangePasswordSerializer(request.user, data=request.data)
-        #serializer = ChangePasswordSerializer(data=request.data)
-        #if serializer.is_valid():
-        #    serializer.save()
-        #    return Response({'detail': 'password changed'})
-        #    #return Response(
-        #    #    {'detail': 'password changed'},
-        #    #    status=status.HTTP_204_NO_CONTENT
-        #    #)
-        #if serializer.is_valid():
-        serializer.is_valid()
-        return Response(serializer.validated_data)
+        serializer = ChangePasswordSerializer(
+            context=request.user,
+            data=request.data
+        )
+        if serializer.is_valid():
+            serializer.update(serializer.validated_data, user=request.user)
+            return Response(
+                {'detail': 'password has been changed'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        return Response(serializer.errors)
 
     @action(detail=False, methods=['get'],
             permission_classes=(permissions.IsAuthenticated,),
@@ -74,34 +73,15 @@ class UserViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, **kwargs):
         follower = request.user
         following = get_object_or_404(User, id=kwargs['pk'])
-        if follower == following:
-            return Response({'errors': 'cant (un)subscribe to myself'})
-        subscription = Follow.objects.filter(
-            follower=follower,
-            following=following
-        )
-        if request.method == 'POST':
-            if subscription:
-                return Response(
-                    {'errors': f'you already following {following.username}'}
-                )
-            sub = Follow.objects.create(follower=follower, following=following)
+        response = create_relation(Follow, follower, following, request)
+        response_status = response.get('status')
+        if response_status == status.HTTP_200_OK:
             serializer = SubscriptionSerializer(
-                sub,
+                response.get('instance'),
                 context={"request": request}
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == 'DELETE':
-            if not subscription:
-                return Response({'errors': 'already unsubscribed'})
-            Follow.objects.filter(
-                follower=follower,
-                following=following
-            ).delete()
-            return Response(
-                {'detail': 'successfuly unsubscribed'},
-                status=status.HTTP_204_NO_CONTENT
-            )
+            return Response(serializer.data, status=response_status)
+        return Response(response.get('string'), status = response_status)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -134,67 +114,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=(permissions.IsAuthenticated,))
     def shopping_cart(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
-        if request.method == 'POST':
+        user = request.user
+        response = create_relation(Cart, user, recipe, request)
+        response_status = response.get('status')
+        if response_status == status.HTTP_200_OK:
             serializer = RecipeSmallSerializer(recipe, data=request.data)
             serializer.is_valid(raise_exception=True)
-            if not Cart.objects.filter(
-                user=request.user,
-                recipe=recipe
-            ).exists():
-                Cart.objects.create(
-                    user=request.user,
-                    recipe=recipe
-                )
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
             return Response(
-                {'detail': 'recipe already in shopping cart'},
-                status=status.HTTP_400_BAD_REQUEST
+                serializer.data,
+                status=response_status
             )
-        if request.method == 'DELETE':
-            get_object_or_404(
-                Cart,
-                user=request.user,
-                recipe=recipe
-            ).delete()
-            return Response(
-                {'detail': 'recipe deleted from shopping cart'},
-                status=status.HTTP_204_NO_CONTENT
-            )
+        return Response(response.get('string'), status = response_status)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(permissions.IsAuthenticated,))
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
-        if request.method == 'POST':
+        user = request.user
+        response = create_relation(Favorite, user, recipe, request)
+        response_status = response.get('status')
+        if response_status == status.HTTP_200_OK:
             serializer = RecipeSmallSerializer(recipe, data=request.data)
             serializer.is_valid(raise_exception=True)
-            if not Favorite.objects.filter(
-                user=request.user,
-                recipe=recipe
-            ).exists():
-                Favorite.objects.create(
-                    user=request.user,
-                    recipe=recipe
-                )
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
             return Response(
-                'already in favorites', status=status.HTTP_400_BAD_REQUEST)
-        if request.method == 'DELETE':
-            get_object_or_404(
-                Favorite,
-                user=request.user,
-                recipe=recipe
-            ).delete()
-            return Response(
-                {'detail': 'recipe deleted from favorites'},
-                status=status.HTTP_204_NO_CONTENT
+                serializer.data,
+                status=response_status
             )
+        return Response(response.get('string'), status = response_status)
+        
 
     @action(detail=False, methods=('GET',),
             permission_classes=(permissions.IsAuthenticated),
