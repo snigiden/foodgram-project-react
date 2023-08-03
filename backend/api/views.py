@@ -1,3 +1,5 @@
+from io import StringIO
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status, viewsets
@@ -145,5 +147,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=(permissions.IsAuthenticated,),
             url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
-        response = Cart.create_grocery_list(request)
+        queryset = Cart.create_grocery_queryset(request.user)
+        buffer = StringIO()
+        for item in queryset:
+            buffer.write(f"{item['ingredient__name']}\t")
+            buffer.write(f"{item['amount']}\t")
+            buffer.write(f"{item['ingredient__measurement_unit']}\n")
+        response = FileResponse(buffer.getvalue(), content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="cart.txt"'
         return response
