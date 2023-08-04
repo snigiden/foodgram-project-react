@@ -1,3 +1,5 @@
+from io import StringIO
+
 from django.db import models
 
 from recipes.models import Recipe, RecipeIngredient
@@ -64,4 +66,9 @@ class Cart(models.Model):
         ).annotate(
             amount=models.Sum('amount')
         )
-        return ingredients
+        buffer = StringIO()
+        for item in ingredients:
+            buffer.write(f"{item['ingredient__name']}\t")
+            buffer.write(f"{item['amount']}\t")
+            buffer.write(f"{item['ingredient__measurement_unit']}\n")
+        return buffer
