@@ -57,7 +57,7 @@ class Cart(models.Model):
             )
         ]
 
-    def create_grocery_queryset(user):
+    def create_grocery_queryset(self, user):
         ingredients = RecipeIngredient.objects.filter(
             recipe__cart_recipe__user=user
         ).values(
