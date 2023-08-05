@@ -22,7 +22,7 @@ jobs:
     - name: Test with flake8
       run: |
         cd backend
-        python -m flake8 --exclude migrations settings
+        python -m flake8 --exclude migrations settings.py
 
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
