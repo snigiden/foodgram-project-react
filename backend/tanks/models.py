@@ -1,6 +1,8 @@
+from io import StringIO
+
 from django.db import models
 
-from recipes.models import Recipe
+from recipes.models import Recipe, RecipeIngredient
 from users.models import User
 
 
@@ -54,3 +56,19 @@ class Cart(models.Model):
                 name='unique_cart',
             )
         ]
+
+    def create_grocery_queryset(user):
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__cart_recipe__user=user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(
+            amount=models.Sum('amount')
+        )
+        buffer = StringIO()
+        for item in ingredients:
+            buffer.write(f"{item['ingredient__name']}\t")
+            buffer.write(f"{item['amount']}\t")
+            buffer.write(f"{item['ingredient__measurement_unit']}\n")
+        return buffer
