@@ -59,7 +59,7 @@ class Cart(models.Model):
 
     def create_grocery_queryset(user):
         ingredients = RecipeIngredient.objects.filter(
-            recipe__cart_recipe__user=user
+            recipe__carts__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
