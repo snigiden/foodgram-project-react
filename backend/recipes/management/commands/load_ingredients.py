@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         with open(
-                'backend/ingredients.json', 'r',
+                'ingredients.json', 'r',
                 encoding='UTF-8'
         ) as ingredients:
             ingredient_data = json.loads(ingredients.read())
