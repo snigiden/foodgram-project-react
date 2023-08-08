@@ -116,10 +116,7 @@ class RecipeIngredientShowSerializer(serializers.ModelSerializer):
 
 class RecipeShowSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
-    tags = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=Tag.objects.all(),
-    )
+    tags = TagSerializer(many=True, read_only=True)
     author = UserShowSerializer()
     ingredients = RecipeIngredientShowSerializer(many=True, source='recipes')
     is_favorited = serializers.SerializerMethodField()
