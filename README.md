@@ -15,7 +15,7 @@ http://84.201.161.194/
 ___
 ## Админка
 
-login: admin
+login: admin  
 
 password: admin
 ___
