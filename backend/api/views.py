@@ -5,8 +5,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag
-from tanks.models import Cart, Favorite
+from recipes.models import Ingredient, Recipe, Tag, Cart, Favorite
 from users.models import Follow, User
 
 from .filters import NameSearcher, RecipeFilter
