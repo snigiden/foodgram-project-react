@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from tanks.models import Cart, Favorite
 from users.models import User
 
 from . import models
@@ -47,6 +46,6 @@ admin.site.register(models.Recipe)
 admin.site.register(models.Tag)
 admin.site.register(models.Ingredient)
 admin.site.register(models.RecipeIngredient)
-admin.site.register(Favorite)
-admin.site.register(Cart)
+admin.site.register(models.Favorite)
+admin.site.register(models.Cart)
 admin.site.register(User)
