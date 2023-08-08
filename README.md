@@ -1,5 +1,5 @@
 # Проект «Курсовая работа по написанию и контейнеризации бэкэнда» 
-![Github actions](https://github.com/snigiden/foodgram-project-react/actions/workflows/workflow.yaml/badge.svg)
+![Github actions](https://github.com/snigiden/foodgram-project-react/actions/workflows/workflow.yml/badge.svg)
 ___
 ## Используемые технологии:
 - Python
