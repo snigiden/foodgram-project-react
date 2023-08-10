@@ -24,8 +24,9 @@ ___
 
 * Отредактировать цепочку секретов
 
-* Импортировать базу ингредиентов:
-  sudo docker-compose exec backend python manage.py load_ingredients
+* Импортировать базу ингредиентов:  
+
+sudo docker-compose exec backend python manage.py load_ingredients
 ___
 ## Список эндпоинтов:
 
